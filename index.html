@@ -451,6 +451,24 @@ let recognition = null;
 let animFrame = null;
 let inputMode = 'voice';
 let currentTranscript = '';
+let cachedVoices = [];
+
+// Pre-load voices (Chrome loads them async)
+if (window.speechSynthesis) {
+  const load = () => { cachedVoices = speechSynthesis.getVoices(); };
+  speechSynthesis.onvoiceschanged = load;
+  load();
+}
+
+// iOS/Android: speechSynthesis must be triggered from a user gesture.
+// Call this on every mic-press / send-press to unlock audio for the
+// upcoming async speak() call.
+function unlockAudio() {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance('');
+  u.volume = 0;
+  speechSynthesis.speak(u);
+}
 
 const SYSTEM_PROMPT = `Je bent een vriendelijke, professionele receptionist van Hotel Lumière, een luxe hotelketen met vestigingen in Amsterdam, Rotterdam, Utrecht en Den Haag. Een gast spreekt met je. Stel gerichte vragen om de gast te helpen, zoals bij een echte hotelreceptie. Vraag naar gewenste vestiging, datum, aantal personen, kamertype, en speciale wensen. Bevestig reserveringen netjes. Antwoord altijd in het Nederlands. Houd antwoorden kort en natuurlijk, maximaal 3 zinnen.`;
 
@@ -567,6 +585,7 @@ function setupSpeechRecognition() {
 function toggleMic() {
   if (isProcessing) return;
   if (!recognition) return;
+  unlockAudio();
   if (isListening) {
     recognition.stop();
   } else {
@@ -638,6 +657,7 @@ function sendTyped() {
   const ta = document.getElementById('text-input');
   const text = ta.value.trim();
   if (!text || isProcessing) return;
+  unlockAudio();
   ta.value = ''; ta.style.height = 'auto';
   sendMessage(text);
 }
@@ -755,7 +775,7 @@ function speak(text) {
   utt.lang = 'nl-NL';
   utt.rate = 0.9;
   utt.pitch = 1.05;
-  const voices = speechSynthesis.getVoices();
+  const voices = cachedVoices.length ? cachedVoices : speechSynthesis.getVoices();
   const best = voices.find(v => v.lang === 'nl-NL' && v.localService)
             || voices.find(v => v.lang === 'nl-NL')
             || voices.find(v => v.lang.startsWith('nl'));
