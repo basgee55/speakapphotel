@@ -1,4 +1,4 @@
-const CACHE = 'lumiere-v5';
+const CACHE = 'lumiere-v6';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -14,7 +14,7 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('api.anthropic.com') || e.request.url.includes('fonts.googleapis.com')) {
+  if (e.request.url.includes('api.anthropic.com') || e.request.url.includes('fonts.googleapis.com') || e.request.url.includes('api.elevenlabs.io') || e.request.url.includes('workers.dev')) {
     return;
   }
   e.respondWith(
