@@ -2,7 +2,7 @@
   "name": "Hotel Lumière AI",
   "short_name": "Lumière",
   "description": "Persoonlijke hotel-assistent voor Hotel Lumière",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#05050a",
   "theme_color": "#05050a",
