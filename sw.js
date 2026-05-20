@@ -1,4 +1,4 @@
-const CACHE = 'lumiere-v7';
+const CACHE = 'lumiere-v8';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {

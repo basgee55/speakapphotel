@@ -616,6 +616,7 @@
       </div>
     </div>
     <button id="save-key-btn" onclick="saveApiKey()" disabled>Opslaan &amp; Doorgaan</button>
+    <button id="tts-test-btn" onclick="testSpeak()" style="width:100%;padding:10px;border-radius:10px;border:0.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.08em;cursor:pointer;">Test spraak 🔊</button>
     <div class="settings-hint">Anthropic: console.anthropic.com &nbsp;·&nbsp; ElevenLabs: elevenlabs.io</div>
   </div>
 </div>
@@ -656,9 +657,19 @@ Spreek de eigenaar aan als "u". Wees professioneel maar direct. Antwoord altijd 
 const ELEVENLABS_KEY_STORAGE = 'elevenlabs_key';
 const ELEVENLABS_ENDPOINT = 'https://api.elevenlabs.io/v1/text-to-speech/rbqBOMK4BPTMGvIB7N8w';
 let ttsEnabled = localStorage.getItem('lumiere_tts') !== 'off';
-let currentAudio = null;
+let ttsAudioCtx = null;
+let ttsCurrentSource = null;
 
 function getElLabsKey() { return localStorage.getItem(ELEVENLABS_KEY_STORAGE) || ''; }
+
+// Unlock Web Audio API on first user gesture (required by iOS/Android)
+function unlockAudio() {
+  if (ttsAudioCtx) { if (ttsAudioCtx.state === 'suspended') ttsAudioCtx.resume(); return; }
+  ttsAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const buf = ttsAudioCtx.createBuffer(1, 1, 22050);
+  const src = ttsAudioCtx.createBufferSource();
+  src.buffer = buf; src.connect(ttsAudioCtx.destination); src.start(0);
+}
 
 function toggleElLabsVis() {
   const input = document.getElementById('elevenlabs-key-input');
@@ -668,8 +679,9 @@ function toggleElLabsVis() {
 function toggleTts() {
   ttsEnabled = !ttsEnabled;
   localStorage.setItem('lumiere_tts', ttsEnabled ? 'on' : 'off');
+  unlockAudio();
   updateTtsBtn();
-  if (!ttsEnabled && currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (!ttsEnabled && ttsCurrentSource) { try { ttsCurrentSource.stop(); } catch(e) {} ttsCurrentSource = null; }
 }
 
 function updateTtsBtn() {
@@ -683,18 +695,17 @@ async function speak(text) {
   if (!ttsEnabled || !text.trim()) return;
   const key = getElLabsKey();
   if (!key) {
-    setStatus('error', 'ElevenLabs key ontbreekt', 'red');
-    setTimeout(() => setStatus('idle', 'Gereed', ''), 3000);
+    setStatus('error', 'ElevenLabs key ontbreekt — stel in via ⚙️', 'red');
+    setTimeout(() => setStatus('idle', 'Gereed', ''), 4000);
     return;
   }
-  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (ttsCurrentSource) { try { ttsCurrentSource.stop(); } catch(e) {} ttsCurrentSource = null; }
+  if (!ttsAudioCtx) ttsAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ttsAudioCtx.state === 'suspended') await ttsAudioCtx.resume();
   try {
     const res = await fetch(ELEVENLABS_ENDPOINT, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'xi-api-key': key,
-      },
+      headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
       body: JSON.stringify({
         text,
         model_id: 'eleven_multilingual_v2',
@@ -705,21 +716,31 @@ async function speak(text) {
       const err = await res.json().catch(() => ({}));
       setStatus('error', `Spraak fout ${res.status}`, 'red');
       setTimeout(() => setStatus('idle', 'Gereed', ''), 3000);
-      console.error('ElevenLabs error:', res.status, err);
       return;
     }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    currentAudio = new Audio(url);
-    currentAudio.onended = () => { URL.revokeObjectURL(url); setStatus('idle', 'Gereed', ''); };
-    updateTtsBtn();
+    const arrayBuffer = await res.arrayBuffer();
+    const decoded = await ttsAudioCtx.decodeAudioData(arrayBuffer);
+    if (ttsCurrentSource) { try { ttsCurrentSource.stop(); } catch(e) {} }
+    const source = ttsAudioCtx.createBufferSource();
+    source.buffer = decoded;
+    source.connect(ttsAudioCtx.destination);
+    source.onended = () => { ttsCurrentSource = null; setStatus('idle', 'Gereed', ''); };
+    ttsCurrentSource = source;
     setStatus('speaking', 'Spreekt...', '');
-    await currentAudio.play();
+    source.start(0);
   } catch (e) {
-    console.error('TTS fout:', e);
-    setStatus('error', 'TTS fout', 'red');
-    setTimeout(() => setStatus('idle', 'Gereed', ''), 3000);
+    setStatus('error', `TTS: ${e.message}`, 'red');
+    setTimeout(() => setStatus('idle', 'Gereed', ''), 4000);
   }
+
+}
+
+async function testSpeak() {
+  const btn = document.getElementById('tts-test-btn');
+  if (btn) btn.textContent = 'Laden...';
+  unlockAudio();
+  await speak('Dit is een spraaktest van Hotel Lumière.');
+  if (btn) btn.textContent = 'Test spraak';
 }
 
 // ── SETTINGS ───────────────────────────────────────────────────────────
@@ -864,6 +885,7 @@ function setupSpeechRecognition() {
 }
 
 function toggleMic() {
+  unlockAudio();
   if (isProcessing) return;
   if (!recognition) return;
   if (isListening) {
@@ -945,6 +967,7 @@ function setupTextInput() {
 }
 
 function sendTyped() {
+  unlockAudio();
   const ta = document.getElementById('text-input');
   const text = ta.value.trim();
   if (!text || isProcessing) return;
@@ -963,6 +986,7 @@ function switchMode(mode) {
 
 // ── SEND MESSAGE ───────────────────────────────────────────────────────
 function sendQuick(text) {
+  unlockAudio();
   document.getElementById('welcome')?.remove();
   sendMessage(text);
 }
