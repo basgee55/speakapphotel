@@ -1,8 +1,9 @@
-const CACHE = 'lumiere-v10';
-const ASSETS = ['./', './index.html', './manifest.json'];
+const CACHE = 'lumiere-v11';
+const STATIC = ['./manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
+const BYPASS = ['api.anthropic.com', 'api.elevenlabs.io', 'fonts.googleapis.com', 'fonts.gstatic.com', 'workers.dev'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)));
   self.skipWaiting();
 });
 
@@ -14,10 +15,13 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('api.anthropic.com') || e.request.url.includes('fonts.googleapis.com') || e.request.url.includes('api.elevenlabs.io') || e.request.url.includes('workers.dev')) {
+  if (BYPASS.some(h => e.request.url.includes(h))) return;
+
+  // HTML: always network-first so updates are picked up immediately
+  if (e.request.mode === 'navigate' || e.request.destination === 'document') {
+    e.respondWith(fetch(e.request).catch(() => caches.match('./index.html')));
     return;
   }
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
-  );
+
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
 });
