@@ -373,9 +373,31 @@ function updateSaveBtn() {
 
 // ── TTS ────────────────────────────────────────────────────────────────
 if (window.speechSynthesis) {
-  const load = () => { cachedVoices = speechSynthesis.getVoices(); };
+  const load = () => {
+    cachedVoices = speechSynthesis.getVoices();
+    const nlVoices = cachedVoices.filter(v => v.lang.startsWith('nl'));
+    if (nlVoices.length) {
+      console.log(`[TTS] ${nlVoices.length} Nederlandse stem(men) gevonden:`);
+      nlVoices.forEach((v, i) =>
+        console.log(`  ${i + 1}. "${v.name}" | lang: ${v.lang} | lokaal: ${v.localService} | default: ${v.default}`)
+      );
+    } else {
+      console.warn('[TTS] Geen Nederlandse stemmen gevonden. Alle beschikbare stemmen:', cachedVoices.map(v => v.name + ' (' + v.lang + ')'));
+    }
+  };
   speechSynthesis.onvoiceschanged = load;
   load();
+}
+
+function pickBestVoice(voices) {
+  const nl = voices.filter(v => v.lang.startsWith('nl'));
+  // Voorkeursvolgorde: nl-NL lokaal > nl-BE lokaal > nl-NL online > nl-BE online > elke nl
+  return nl.find(v => v.lang === 'nl-NL' && v.localService)
+      || nl.find(v => v.lang === 'nl-BE' && v.localService)
+      || nl.find(v => v.lang === 'nl-NL')
+      || nl.find(v => v.lang === 'nl-BE')
+      || nl[0]
+      || null;
 }
 
 function unlockAudio() {
@@ -389,12 +411,17 @@ function speak(text) {
   if (!window.speechSynthesis) return;
   speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'nl-NL'; utt.rate = 0.9; utt.pitch = 1.05;
+  utt.lang = 'nl-NL';
+  utt.rate = 0.85;
+  utt.pitch = 1.1;
   const voices = cachedVoices.length ? cachedVoices : speechSynthesis.getVoices();
-  const best = voices.find(v => v.lang === 'nl-NL' && v.localService)
-            || voices.find(v => v.lang === 'nl-NL')
-            || voices.find(v => v.lang.startsWith('nl'));
-  if (best) utt.voice = best;
+  const best = pickBestVoice(voices);
+  if (best) {
+    utt.voice = best;
+    console.log(`[TTS] Spreekt met stem: "${best.name}" (${best.lang}, lokaal: ${best.localService})`);
+  } else {
+    console.warn('[TTS] Geen Nederlandse stem beschikbaar, gebruik browser-standaard.');
+  }
   utt.onstart = () => setStatus('speaking', 'SPREEKT');
   utt.onend = utt.onerror = () => setStatus('idle', 'GEREED');
   speechSynthesis.speak(utt);
