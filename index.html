@@ -608,23 +608,10 @@
         <input id="proxy-url-input" type="url" placeholder="https://jouw-worker.workers.dev" autocomplete="off" spellcheck="false" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;padding:11px 14px;">
       </div>
     </div>
-    <div class="settings-field">
-      <div class="settings-label">ElevenLabs API-sleutel <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(voor spraak)</span></div>
-      <div class="settings-input-wrap">
-        <input id="elevenlabs-key-input" type="password" placeholder="sk_..." autocomplete="off" spellcheck="false" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;padding:11px 14px;">
-        <button onclick="toggleElLabsVis()" title="Toon/verberg sleutel" style="padding:0 12px;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:15px;">👁</button>
-      </div>
-    </div>
-    <div class="settings-field">
-      <div class="settings-label">Stem-ID <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(optioneel, standaard: Rachel)</span></div>
-      <div class="settings-input-wrap">
-        <input id="elevenlabs-voice-input" type="text" placeholder="21m00Tcm4TlvDq8ikWAM" autocomplete="off" spellcheck="false" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;padding:11px 14px;letter-spacing:0.02em;">
-      </div>
-    </div>
     <button id="save-key-btn" onclick="saveApiKey()" disabled>Opslaan &amp; Doorgaan</button>
     <button id="tts-test-btn" onclick="testSpeak()" style="width:100%;padding:10px;border-radius:10px;border:0.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.08em;cursor:pointer;">Test spraak 🔊</button>
     <div id="tts-test-feedback" style="font-size:12px;text-align:center;color:var(--muted);min-height:16px;"></div>
-    <div class="settings-hint">Anthropic: console.anthropic.com &nbsp;·&nbsp; ElevenLabs: elevenlabs.io</div>
+    <div class="settings-hint">Anthropic: console.anthropic.com</div>
   </div>
 </div>
 
@@ -660,50 +647,21 @@ Voeg alleen relevante items toe (max 5). Laat het blok weg als er geen relevante
 
 Spreek de eigenaar aan als "u". Wees professioneel maar direct. Antwoord altijd in het Nederlands.`;
 
-// ── TEXT-TO-SPEECH (ElevenLabs) ────────────────────────────────────────
-const ELEVENLABS_KEY_STORAGE    = 'elevenlabs_key';
-const ELEVENLABS_VOICE_STORAGE  = 'elevenlabs_voice';
-function getElLabsVoice() { return localStorage.getItem(ELEVENLABS_VOICE_STORAGE) || ''; }
-function getElLabsEndpoint(voiceId) { return `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`; }
-
-async function resolveVoiceId(key) {
-  const stored = getElLabsVoice();
-  if (stored) return stored;
-  const res = await fetch('https://api.elevenlabs.io/v1/voices', {
-    headers: { 'xi-api-key': key }
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  const voice = data.voices?.[0]?.voice_id;
-  if (voice) localStorage.setItem(ELEVENLABS_VOICE_STORAGE, voice);
-  return voice || null;
-}
+// ── TEXT-TO-SPEECH (Web Speech API) ───────────────────────────────────
 let ttsEnabled = localStorage.getItem('lumiere_tts') !== 'off';
-let ttsAudioCtx = null;
-let ttsCurrentSource = null;
+let ttsVoice = null;
 
-function getElLabsKey() { return localStorage.getItem(ELEVENLABS_KEY_STORAGE) || ''; }
-
-// Unlock Web Audio API on first user gesture (required by iOS/Android)
-function unlockAudio() {
-  if (ttsAudioCtx) { if (ttsAudioCtx.state === 'suspended') ttsAudioCtx.resume(); return; }
-  ttsAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const buf = ttsAudioCtx.createBuffer(1, 1, 22050);
-  const src = ttsAudioCtx.createBufferSource();
-  src.buffer = buf; src.connect(ttsAudioCtx.destination); src.start(0);
-}
-
-function toggleElLabsVis() {
-  const input = document.getElementById('elevenlabs-key-input');
-  input.type = input.type === 'password' ? 'text' : 'password';
+function loadTtsVoice() {
+  if (!('speechSynthesis' in window)) return;
+  const voices = speechSynthesis.getVoices();
+  ttsVoice = voices.find(v => v.lang.startsWith('nl')) || voices[0] || null;
 }
 
 function toggleTts() {
   ttsEnabled = !ttsEnabled;
   localStorage.setItem('lumiere_tts', ttsEnabled ? 'on' : 'off');
-  unlockAudio();
   updateTtsBtn();
-  if (!ttsEnabled && ttsCurrentSource) { try { ttsCurrentSource.stop(); } catch(e) {} ttsCurrentSource = null; }
+  if (!ttsEnabled) speechSynthesis.cancel();
 }
 
 function updateTtsBtn() {
@@ -713,50 +671,16 @@ function updateTtsBtn() {
   btn.classList.toggle('on', ttsEnabled);
 }
 
-async function speak(text) {
-  if (!ttsEnabled || !text.trim()) return;
-  const key = getElLabsKey();
-  if (!key) {
-    setStatus('error', 'ElevenLabs key ontbreekt — stel in via ⚙️', 'red');
-    setTimeout(() => setStatus('idle', 'Gereed', ''), 4000);
-    return;
-  }
-  const voiceId = await resolveVoiceId(key);
-  if (!voiceId) { setStatus('error', 'Geen stem gevonden', 'red'); setTimeout(() => setStatus('idle', 'Gereed', ''), 3000); return; }
-  if (ttsCurrentSource) { try { ttsCurrentSource.stop(); } catch(e) {} ttsCurrentSource = null; }
-  if (!ttsAudioCtx) ttsAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (ttsAudioCtx.state === 'suspended') await ttsAudioCtx.resume();
-  try {
-    const res = await fetch(getElLabsEndpoint(voiceId), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
-      body: JSON.stringify({
-        text,
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-      }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      setStatus('error', `Spraak fout ${res.status}`, 'red');
-      setTimeout(() => setStatus('idle', 'Gereed', ''), 3000);
-      return;
-    }
-    const arrayBuffer = await res.arrayBuffer();
-    const decoded = await ttsAudioCtx.decodeAudioData(arrayBuffer);
-    if (ttsCurrentSource) { try { ttsCurrentSource.stop(); } catch(e) {} }
-    const source = ttsAudioCtx.createBufferSource();
-    source.buffer = decoded;
-    source.connect(ttsAudioCtx.destination);
-    source.onended = () => { ttsCurrentSource = null; setStatus('idle', 'Gereed', ''); };
-    ttsCurrentSource = source;
-    setStatus('speaking', 'Spreekt...', '');
-    source.start(0);
-  } catch (e) {
-    setStatus('error', `TTS: ${e.message}`, 'red');
-    setTimeout(() => setStatus('idle', 'Gereed', ''), 4000);
-  }
-
+function speak(text) {
+  if (!ttsEnabled || !text.trim() || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'nl-NL';
+  utt.rate = 1.0;
+  if (ttsVoice) utt.voice = ttsVoice;
+  utt.onstart = () => setStatus('speaking', 'Spreekt...', '');
+  utt.onend = () => setStatus('idle', 'Gereed', '');
+  speechSynthesis.speak(utt);
 }
 
 function setTestFeedback(msg, color) {
@@ -764,55 +688,28 @@ function setTestFeedback(msg, color) {
   if (el) { el.textContent = msg; el.style.color = color || 'var(--muted)'; }
 }
 
-async function testSpeak() {
-  const btn = document.getElementById('tts-test-btn');
-  unlockAudio();
-  const key = document.getElementById('elevenlabs-key-input')?.value.trim() || getElLabsKey();
-  if (!key) { setTestFeedback('Vul eerst een ElevenLabs API-sleutel in.', '#f87171'); return; }
-  btn.textContent = 'Laden...';
-  btn.disabled = true;
-  setTestFeedback('Stemmen ophalen...', 'var(--muted)');
-  if (!ttsAudioCtx) ttsAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (ttsAudioCtx.state === 'suspended') await ttsAudioCtx.resume();
-  try {
-    // Fetch available voices for this account
-    const manualVoice = document.getElementById('elevenlabs-voice-input')?.value.trim();
-    let voiceId = manualVoice;
-    if (!voiceId) {
-      const vRes = await fetch('https://api.elevenlabs.io/v1/voices', { headers: { 'xi-api-key': key } });
-      if (!vRes.ok) { setTestFeedback(`Sleutel fout ${vRes.status}`, '#f87171'); btn.textContent = 'Test spraak 🔊'; btn.disabled = false; return; }
-      const vData = await vRes.json();
-      voiceId = vData.voices?.[0]?.voice_id;
-      if (!voiceId) { setTestFeedback('Geen stemmen gevonden op dit account.', '#f87171'); btn.textContent = 'Test spraak 🔊'; btn.disabled = false; return; }
-      localStorage.setItem(ELEVENLABS_VOICE_STORAGE, voiceId);
-      setTestFeedback(`Stem: ${vData.voices[0].name}`, 'var(--muted)');
-    }
-    const res = await fetch(getElLabsEndpoint(voiceId), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
-      body: JSON.stringify({ text: 'Dit is een spraaktest van Hotel Lumière.', model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.5, similarity_boost: 0.75 } }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      setTestFeedback(`Fout ${res.status}: ${err?.detail?.message || err?.detail || JSON.stringify(err)}`, '#f87171');
-    } else {
-      const arrayBuffer = await res.arrayBuffer();
-      const decoded = await ttsAudioCtx.decodeAudioData(arrayBuffer);
-      if (ttsCurrentSource) { try { ttsCurrentSource.stop(); } catch(e) {} }
-      const source = ttsAudioCtx.createBufferSource();
-      source.buffer = decoded;
-      source.connect(ttsAudioCtx.destination);
-      source.onended = () => { ttsCurrentSource = null; };
-      ttsCurrentSource = source;
-      source.start(0);
-      setTestFeedback('Spraak werkt! ✓', '#4ade80');
-    }
-  } catch (e) {
-    setTestFeedback(`Fout: ${e.message}`, '#f87171');
+function testSpeak() {
+  if (!('speechSynthesis' in window)) {
+    setTestFeedback('Spraak niet ondersteund in deze browser.', '#f87171');
+    return;
   }
-  btn.textContent = 'Test spraak 🔊';
-  btn.disabled = false;
+  loadTtsVoice();
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance('Dit is een spraaktest van Hotel Lumière.');
+  utt.lang = 'nl-NL';
+  utt.rate = 1.0;
+  if (ttsVoice) utt.voice = ttsVoice;
+  utt.onstart = () => setTestFeedback('Spreekt... ✓', '#4ade80');
+  utt.onerror = (e) => setTestFeedback(`Fout: ${e.error}`, '#f87171');
+  speechSynthesis.speak(utt);
 }
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = loadTtsVoice;
+  loadTtsVoice();
+}
+
+function unlockAudio() {} // no-op, not needed for Web Speech API
 
 // ── SETTINGS ───────────────────────────────────────────────────────────
 const API_KEY_STORAGE   = 'lumiere_api_key';
@@ -831,8 +728,6 @@ function getApiBase() {
 function openSettings() {
   document.getElementById('api-key-input').value          = getApiKey();
   document.getElementById('proxy-url-input').value        = getProxyUrl();
-  document.getElementById('elevenlabs-key-input').value   = getElLabsKey();
-  document.getElementById('elevenlabs-voice-input').value = localStorage.getItem(ELEVENLABS_VOICE_STORAGE) || '';
   updateSaveBtn();
   document.getElementById('settings-overlay').classList.remove('hidden');
   setTimeout(() => document.getElementById('api-key-input').focus(), 50);
@@ -845,16 +740,10 @@ function closeSettings() {
 function saveApiKey() {
   const key    = document.getElementById('api-key-input').value.trim();
   const proxy  = document.getElementById('proxy-url-input').value.trim();
-  const elKey  = document.getElementById('elevenlabs-key-input').value.trim();
   if (!key.startsWith('sk-ant-')) return;
   localStorage.setItem(API_KEY_STORAGE, key);
   if (proxy) localStorage.setItem(PROXY_URL_STORAGE, proxy);
   else localStorage.removeItem(PROXY_URL_STORAGE);
-  if (elKey) localStorage.setItem(ELEVENLABS_KEY_STORAGE, elKey);
-  else localStorage.removeItem(ELEVENLABS_KEY_STORAGE);
-  const voice = document.getElementById('elevenlabs-voice-input').value.trim();
-  if (voice) localStorage.setItem(ELEVENLABS_VOICE_STORAGE, voice);
-  else localStorage.removeItem(ELEVENLABS_VOICE_STORAGE);
   closeSettings();
 }
 
