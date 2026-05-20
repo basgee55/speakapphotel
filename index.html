@@ -390,12 +390,9 @@ if (window.speechSynthesis) {
 }
 
 function pickBestVoice(voices) {
+  // Alleen overschrijven bij exacte naamsmatch; anders OS-standaard gebruiken via lang
   return voices.find(v => v.name === 'Google Nederlands')
       || voices.find(v => v.name === 'Microsoft Frank - Dutch (Netherlands)')
-      || voices.find(v => v.lang === 'nl-NL' && v.localService)
-      || voices.find(v => v.lang === 'nl-BE' && v.localService)
-      || voices.find(v => v.lang === 'nl-NL')
-      || voices.find(v => v.lang.startsWith('nl'))
       || null;
 }
 

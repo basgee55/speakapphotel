@@ -1,4 +1,4 @@
-const CACHE = 'lumiere-v19';
+const CACHE = 'lumiere-v20';
 const STATIC = ['./manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 const BYPASS = ['api.anthropic.com', 'api.elevenlabs.io', 'fonts.googleapis.com', 'fonts.gstatic.com', 'workers.dev'];
 
