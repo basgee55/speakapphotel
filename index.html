@@ -586,8 +586,8 @@
 <div id="settings-overlay" class="hidden">
   <div id="settings-card">
     <div class="settings-header">
-      <div class="settings-title">API-sleutel instellen</div>
-      <div class="settings-sub">Voer uw Anthropic API-sleutel in. Deze wordt lokaal opgeslagen op uw apparaat en nooit gedeeld.</div>
+      <div class="settings-title">Instellingen</div>
+      <div class="settings-sub">Uw gegevens worden lokaal opgeslagen op dit apparaat en nooit gedeeld.</div>
     </div>
     <div class="settings-field">
       <div class="settings-label">Anthropic API-sleutel</div>
@@ -596,8 +596,14 @@
         <button id="toggle-key-vis" onclick="toggleKeyVisibility()" title="Toon/verberg sleutel">👁</button>
       </div>
     </div>
+    <div class="settings-field">
+      <div class="settings-label">Proxy-URL <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(verplicht voor browser-gebruik)</span></div>
+      <div class="settings-input-wrap">
+        <input id="proxy-url-input" type="url" placeholder="https://jouw-worker.workers.dev" autocomplete="off" spellcheck="false" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;padding:11px 14px;">
+      </div>
+    </div>
     <button id="save-key-btn" onclick="saveApiKey()" disabled>Opslaan &amp; Doorgaan</button>
-    <div class="settings-hint">Uw sleutel is te vinden op console.anthropic.com</div>
+    <div class="settings-hint">Sleutel: console.anthropic.com &nbsp;·&nbsp; Proxy: zie worker.js in de repo</div>
   </div>
 </div>
 
@@ -633,20 +639,24 @@ Voeg alleen relevante items toe (max 5). Laat het blok weg als er geen relevante
 
 Spreek de eigenaar aan als "u". Wees professioneel maar direct. Antwoord altijd in het Nederlands.`;
 
-// ── API KEY ────────────────────────────────────────────────────────────
-const API_KEY_STORAGE = 'lumiere_api_key';
+// ── SETTINGS ───────────────────────────────────────────────────────────
+const API_KEY_STORAGE   = 'lumiere_api_key';
+const PROXY_URL_STORAGE = 'lumiere_proxy_url';
 
-function getApiKey() {
-  return localStorage.getItem(API_KEY_STORAGE) || '';
+function getApiKey()   { return localStorage.getItem(API_KEY_STORAGE)   || ''; }
+function getProxyUrl() { return localStorage.getItem(PROXY_URL_STORAGE) || ''; }
+
+function getApiBase() {
+  const proxy = getProxyUrl();
+  return proxy ? proxy.replace(/\/$/, '') : 'https://api.anthropic.com';
 }
 
 function openSettings() {
-  const overlay = document.getElementById('settings-overlay');
-  const input = document.getElementById('api-key-input');
-  input.value = getApiKey();
+  document.getElementById('api-key-input').value   = getApiKey();
+  document.getElementById('proxy-url-input').value = getProxyUrl();
   updateSaveBtn();
-  overlay.classList.remove('hidden');
-  setTimeout(() => input.focus(), 50);
+  document.getElementById('settings-overlay').classList.remove('hidden');
+  setTimeout(() => document.getElementById('api-key-input').focus(), 50);
 }
 
 function closeSettings() {
@@ -654,9 +664,12 @@ function closeSettings() {
 }
 
 function saveApiKey() {
-  const val = document.getElementById('api-key-input').value.trim();
-  if (!val.startsWith('sk-ant-')) return;
-  localStorage.setItem(API_KEY_STORAGE, val);
+  const key   = document.getElementById('api-key-input').value.trim();
+  const proxy = document.getElementById('proxy-url-input').value.trim();
+  if (!key.startsWith('sk-ant-')) return;
+  localStorage.setItem(API_KEY_STORAGE, key);
+  if (proxy) localStorage.setItem(PROXY_URL_STORAGE, proxy);
+  else localStorage.removeItem(PROXY_URL_STORAGE);
   closeSettings();
 }
 
@@ -886,7 +899,7 @@ async function sendMessage(text) {
   if (!apiKey) { openSettings(); isProcessing = false; typingEl.remove(); history.pop(); return; }
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(getApiBase() + '/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -895,7 +908,7 @@ async function sendMessage(text) {
         'anthropic-dangerous-direct-browser-calls': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1000,
         system: SYSTEM_PROMPT,
         messages: history
@@ -904,6 +917,17 @@ async function sendMessage(text) {
 
     const data = await res.json();
     typingEl.remove();
+
+    if (!res.ok) {
+      const errMsg = data?.error?.message || `API fout ${res.status}`;
+      addMsg('ai', `Fout: ${errMsg}`);
+      setStatus('error', 'Fout', 'red');
+      document.getElementById('ambient-border').className = 'error';
+      setTimeout(() => { setStatus('idle', 'Gereed', ''); document.getElementById('ambient-border').className = ''; }, 3000);
+      history.pop();
+      isProcessing = false;
+      return;
+    }
 
     const raw = data.content?.[0]?.text || 'Geen antwoord ontvangen.';
     const { clean, blocks } = parseResponse(raw);
@@ -917,13 +941,16 @@ async function sendMessage(text) {
 
   } catch (err) {
     typingEl.remove();
-    addMsg('ai', 'Er is een verbindingsfout opgetreden. Probeer opnieuw.');
+    const msg = getProxyUrl()
+      ? 'Verbindingsfout. Controleer de proxy-URL in ⚙️ instellingen.'
+      : 'Verbindingsfout. Stel een proxy-URL in via ⚙️ (zie worker.js in de repo).';
+    addMsg('ai', msg);
     setStatus('error', 'Fout', 'red');
     document.getElementById('ambient-border').className = 'error';
     setTimeout(() => {
       setStatus('idle', 'Gereed', '');
       document.getElementById('ambient-border').className = '';
-    }, 2000);
+    }, 3000);
     history.pop();
   }
 
