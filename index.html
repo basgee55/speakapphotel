@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Lumière">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Hotel Lumière AI</title>
+  <title>Hotel Lumière</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -18,7 +18,6 @@
       --gold-bright: #f0cc6e;
       --gold-dim: #6a5218;
       --void: #05050a;
-      --surface: #0d0d16;
       --surface2: #14141f;
       --glass: rgba(201,168,76,0.05);
       --border: rgba(201,168,76,0.15);
@@ -41,7 +40,6 @@
     #ambient-border {
       position: fixed; inset: 0; z-index: 100;
       pointer-events: none;
-      border-radius: 0;
       transition: box-shadow 0.8s ease;
       box-shadow: inset 0 0 0px 0px transparent;
     }
@@ -51,9 +49,7 @@
     #ambient-border.error     { box-shadow: inset 0 0 30px 4px rgba(239,68,68,0.3); }
 
     /* BACKGROUND */
-    #bg {
-      position: fixed; inset: 0; z-index: 0; overflow: hidden;
-    }
+    #bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
     #bg::before {
       content: ''; position: absolute;
       width: 500px; height: 500px; border-radius: 50%;
@@ -71,7 +67,6 @@
     @keyframes orb1 { from { transform: translate(0,0) scale(1); } to { transform: translate(-20px,30px) scale(1.12); } }
     @keyframes orb2 { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,-20px) scale(1.1); } }
 
-    /* SCANLINES */
     .scan {
       position: fixed; inset: 0; z-index: 1; pointer-events: none;
       background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
@@ -107,7 +102,7 @@
       font-size: 9px; letter-spacing: 0.38em;
       color: var(--gold-dim); text-transform: uppercase; font-weight: 500;
     }
-    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .header-right { display: flex; flex-direction: row; align-items: center; gap: 10px; }
     .status-pill {
       display: flex; align-items: center; gap: 5px;
       font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
@@ -120,40 +115,14 @@
       animation: pulse-dot 2.5s ease-in-out infinite;
       transition: background 0.4s, box-shadow 0.4s;
     }
-    .status-dot.gold { background: var(--gold); box-shadow: 0 0 6px rgba(201,168,76,0.7); }
-    .status-dot.purple { background: #a78bfa; box-shadow: 0 0 6px rgba(167,139,250,0.7); }
-    .status-dot.red { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.7); }
+    .status-dot.gold   { background: var(--gold);   box-shadow: 0 0 6px rgba(201,168,76,0.7); }
+    .status-dot.purple { background: #a78bfa;        box-shadow: 0 0 6px rgba(167,139,250,0.7); }
+    .status-dot.red    { background: #f87171;        box-shadow: 0 0 6px rgba(248,113,113,0.7); }
     @keyframes pulse-dot {
       0%,100% { opacity:1; transform:scale(1); }
       50% { opacity:0.4; transform:scale(0.65); }
     }
     #status-text { font-size: 9px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; }
-
-    /* VESTIGING TABS */
-    #tabs {
-      flex-shrink: 0;
-      padding: 10px 20px 8px;
-    }
-    .tab-row {
-      display: flex; gap: 7px;
-      overflow-x: auto; scrollbar-width: none;
-    }
-    .tab-row::-webkit-scrollbar { display: none; }
-    .tab {
-      flex-shrink: 0;
-      padding: 5px 13px; border-radius: 20px;
-      font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
-      text-transform: uppercase; white-space: nowrap;
-      cursor: pointer; border: 0.5px solid rgba(201,168,76,0.15);
-      background: transparent; color: var(--muted);
-      transition: all 0.2s;
-    }
-    .tab.active {
-      background: rgba(201,168,76,0.1);
-      border-color: var(--gold);
-      color: var(--gold-bright);
-      box-shadow: 0 0 14px rgba(201,168,76,0.15);
-    }
 
     /* MESSAGES */
     #messages {
@@ -185,28 +154,17 @@
     @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
     .welcome-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 18px; font-weight: 300;
+      font-size: 20px; font-weight: 300;
       color: var(--gold-bright); letter-spacing: 0.08em;
+      line-height: 1.4;
     }
     .welcome-sub { font-size: 13px; color: var(--muted); line-height: 1.65; max-width: 260px; }
-    .quick-list { display: flex; flex-direction: column; gap: 7px; width: 100%; max-width: 290px; margin-top: 6px; }
-    .quick-btn {
-      padding: 10px 14px;
-      border: 0.5px solid var(--border);
-      border-radius: 10px; background: var(--glass);
-      color: var(--text); font-family: 'Rajdhani', sans-serif;
-      font-size: 13px; font-weight: 500;
-      cursor: pointer; text-align: left;
-      display: flex; align-items: center; gap: 10px;
-      transition: all 0.2s; letter-spacing: 0.02em;
-    }
-    .quick-btn:active { border-color: var(--gold); background: rgba(201,168,76,0.1); color: var(--gold-bright); }
 
     /* MESSAGES */
     .msg { display: flex; flex-direction: column; gap: 3px; animation: fadeUp 0.22s ease; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:translateY(0)} }
     .msg.user { align-items: flex-end; }
-    .msg.ai { align-items: flex-start; }
+    .msg.ai   { align-items: flex-start; }
     .msg-label { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); padding: 0 3px; }
     .msg.user .msg-label { color: rgba(201,168,76,0.35); }
     .bubble {
@@ -225,39 +183,6 @@
       border-radius: 3px 14px 14px 14px;
       color: rgba(237,232,220,0.9);
     }
-    .msg.ai .bubble.streaming { border-color: rgba(201,168,76,0.15); }
-
-    /* ACTION BLOCKS */
-    .action-blocks {
-      display: flex; flex-wrap: wrap; gap: 6px;
-      margin-top: 6px; max-width: 88%;
-      animation: fadeUp 0.3s ease 0.1s both;
-    }
-    .action-block {
-      display: flex; flex-direction: column; gap: 2px;
-      padding: 7px 11px;
-      border: 0.5px solid var(--border);
-      border-radius: 8px;
-      background: var(--glass);
-      font-size: 11px;
-      min-width: 80px;
-      cursor: pointer;
-      transition: all 0.2s;
-      position: relative; overflow: hidden;
-    }
-    .action-block::before {
-      content: ''; position: absolute;
-      top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--block-color, var(--gold)), transparent);
-      opacity: 0.6;
-    }
-    .action-block:active { background: rgba(201,168,76,0.1); border-color: var(--gold); }
-    .block-type {
-      font-size: 8px; letter-spacing: 0.15em;
-      text-transform: uppercase; font-weight: 600;
-      color: var(--block-color, var(--gold));
-    }
-    .block-value { font-size: 12px; font-weight: 500; color: var(--text); letter-spacing: 0.02em; }
 
     /* TYPING */
     .typing { display: flex; gap: 5px; padding: 12px 14px; align-items: center; }
@@ -275,15 +200,10 @@
       flex-shrink: 0;
       padding: 8px 20px 4px;
       display: flex; align-items: center; justify-content: center;
-      height: 52px;
-      opacity: 0;
-      transition: opacity 0.4s;
+      height: 52px; opacity: 0; transition: opacity 0.4s;
     }
     #wave-area.active { opacity: 1; }
-    #wave-canvas {
-      width: 100%; height: 40px;
-      border-radius: 20px;
-    }
+    #wave-canvas { width: 100%; height: 40px; border-radius: 20px; }
 
     /* INPUT AREA */
     #input-area {
@@ -295,38 +215,25 @@
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
     }
+    .input-row { display: flex; align-items: center; gap: 10px; }
 
-    .input-row {
-      display: flex; align-items: center; gap: 10px;
-    }
-
-    /* TRANSCRIPT AREA (shown when listening) */
     #transcript-box {
-      flex: 1;
-      min-height: 42px;
+      flex: 1; min-height: 42px;
       background: rgba(255,255,255,0.03);
       border: 0.5px solid rgba(201,168,76,0.2);
       border-radius: 12px;
       padding: 10px 14px;
-      font-size: 14px; line-height: 1.5;
-      color: var(--text);
-      display: none;
-      align-items: center;
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 400;
-      letter-spacing: 0.01em;
-      word-break: break-word;
+      font-size: 14px; line-height: 1.5; color: var(--text);
+      display: none; align-items: center;
+      font-family: 'Rajdhani', sans-serif; font-weight: 400;
+      letter-spacing: 0.01em; word-break: break-word;
     }
     #transcript-box.active { display: flex; }
-    #transcript-placeholder {
-      color: var(--muted); font-style: italic; font-size: 13px;
-    }
+    #transcript-placeholder { color: var(--muted); font-style: italic; font-size: 13px; }
     #transcript-text { color: var(--text); }
 
-    /* TYPE INPUT (shown when not listening) */
     #type-row {
-      flex: 1;
-      display: flex; align-items: flex-end; gap: 8px;
+      flex: 1; display: flex; align-items: flex-end; gap: 8px;
       background: rgba(255,255,255,0.03);
       border: 0.5px solid rgba(201,168,76,0.18);
       border-radius: 12px;
@@ -346,40 +253,31 @@
       border: none; background: rgba(201,168,76,0.15);
       color: var(--gold-bright); cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      font-size: 14px; flex-shrink: 0;
-      transition: all 0.15s;
+      font-size: 14px; flex-shrink: 0; transition: all 0.15s;
     }
     #send-btn:active { transform: scale(0.92); background: rgba(201,168,76,0.3); }
     #send-btn:disabled { opacity: 0.3; }
 
-    /* MIC BUTTON */
     #mic-btn {
       width: 48px; height: 48px; border-radius: 50%;
-      border: 0.5px solid var(--border);
-      background: var(--glass);
+      border: 0.5px solid var(--border); background: var(--glass);
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer; flex-shrink: 0;
-      transition: all 0.25s;
-      position: relative;
+      cursor: pointer; flex-shrink: 0; transition: all 0.25s;
     }
     #mic-btn.listening {
-      background: rgba(201,168,76,0.15);
-      border-color: var(--gold);
+      background: rgba(201,168,76,0.15); border-color: var(--gold);
       box-shadow: 0 0 0 8px rgba(201,168,76,0.08), 0 0 20px rgba(201,168,76,0.2);
       animation: mic-pulse 1.5s ease-in-out infinite;
     }
     #mic-btn.disabled { opacity: 0.35; cursor: default; }
     @keyframes mic-pulse {
       0%,100% { box-shadow: 0 0 0 8px rgba(201,168,76,0.08), 0 0 20px rgba(201,168,76,0.2); }
-      50% { box-shadow: 0 0 0 14px rgba(201,168,76,0.04), 0 0 30px rgba(201,168,76,0.3); }
+      50%      { box-shadow: 0 0 0 14px rgba(201,168,76,0.04), 0 0 30px rgba(201,168,76,0.3); }
     }
     #mic-btn svg { width: 20px; height: 20px; transition: all 0.2s; }
     #mic-btn.listening svg { filter: drop-shadow(0 0 4px rgba(201,168,76,0.8)); }
 
-    /* INPUT TOGGLE */
-    #input-toggle {
-      display: flex; gap: 6px; margin-bottom: 8px; justify-content: center;
-    }
+    #input-toggle { display: flex; gap: 6px; margin-bottom: 8px; justify-content: center; }
     .toggle-btn {
       padding: 4px 12px; border-radius: 12px;
       font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
@@ -387,111 +285,66 @@
       background: transparent; color: var(--muted);
       cursor: pointer; transition: all 0.2s;
     }
-    .toggle-btn.active {
-      background: rgba(201,168,76,0.1); border-color: var(--gold); color: var(--gold-bright);
-    }
+    .toggle-btn.active { background: rgba(201,168,76,0.1); border-color: var(--gold); color: var(--gold-bright); }
 
-    /* NOT SUPPORTED */
-    #no-speech {
-      display: none;
-      text-align: center; font-size: 12px; color: var(--muted);
-      padding: 6px; line-height: 1.5;
-    }
+    #no-speech { display: none; text-align: center; font-size: 12px; color: var(--muted); padding: 6px; line-height: 1.5; }
 
     /* SETTINGS MODAL */
     #settings-overlay {
       position: fixed; inset: 0; z-index: 200;
       background: rgba(5,5,10,0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      display: flex; align-items: center; justify-content: center;
-      padding: 24px;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
     }
     #settings-overlay.hidden { display: none; }
     #settings-card {
       width: 100%; max-width: 380px;
-      background: var(--surface2);
-      border: 0.5px solid var(--border);
-      border-radius: 18px;
-      padding: 28px 24px;
+      background: var(--surface2); border: 0.5px solid var(--border);
+      border-radius: 18px; padding: 28px 24px;
       display: flex; flex-direction: column; gap: 18px;
       box-shadow: 0 0 60px rgba(201,168,76,0.08);
     }
-    .settings-header {
-      display: flex; flex-direction: column; gap: 6px;
-    }
     .settings-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 20px; font-weight: 300;
-      color: var(--gold-bright); letter-spacing: 0.06em;
+      font-size: 20px; font-weight: 300; color: var(--gold-bright); letter-spacing: 0.06em;
     }
-    .settings-sub {
-      font-size: 12px; color: var(--muted); line-height: 1.6;
-    }
+    .settings-sub { font-size: 12px; color: var(--muted); line-height: 1.6; }
     .settings-field { display: flex; flex-direction: column; gap: 7px; }
-    .settings-label {
-      font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-      font-weight: 600; color: var(--gold);
-    }
+    .settings-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: var(--gold); }
     .settings-input-wrap {
       display: flex; align-items: center;
-      background: rgba(255,255,255,0.03);
-      border: 0.5px solid rgba(201,168,76,0.2);
-      border-radius: 10px;
-      overflow: hidden;
-      transition: border-color 0.2s;
+      background: rgba(255,255,255,0.03); border: 0.5px solid rgba(201,168,76,0.2);
+      border-radius: 10px; overflow: hidden; transition: border-color 0.2s;
     }
     .settings-input-wrap:focus-within { border-color: var(--gold); }
-    #api-key-input {
+    .settings-input-wrap input {
       flex: 1; background: transparent; border: none; outline: none;
       color: var(--text); font-family: 'Rajdhani', sans-serif;
-      font-size: 14px; font-weight: 400;
-      padding: 11px 14px;
-      letter-spacing: 0.04em;
+      font-size: 14px; font-weight: 400; padding: 11px 14px; letter-spacing: 0.04em;
     }
-    #api-key-input::placeholder { color: var(--muted); }
-    #toggle-key-vis {
+    .settings-input-wrap input::placeholder { color: var(--muted); }
+    .settings-input-wrap button {
       padding: 0 12px; background: transparent; border: none;
-      color: var(--muted); cursor: pointer; font-size: 15px;
-      flex-shrink: 0;
+      color: var(--muted); cursor: pointer; font-size: 15px; flex-shrink: 0;
     }
     #save-key-btn {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
+      width: 100%; padding: 12px; border-radius: 10px;
       background: linear-gradient(135deg, rgba(201,168,76,0.25), rgba(201,168,76,0.12));
-      border: 0.5px solid var(--gold);
-      color: var(--gold-bright);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 14px; font-weight: 600; letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s;
+      border: 0.5px solid var(--gold); color: var(--gold-bright);
+      font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
     }
     #save-key-btn:active { background: rgba(201,168,76,0.35); }
     #save-key-btn:disabled { opacity: 0.4; cursor: default; }
-    .settings-hint {
-      font-size: 11px; color: var(--muted); line-height: 1.55; text-align: center;
-    }
-    .settings-hint a { color: var(--gold-dim); }
+    .settings-hint { font-size: 11px; color: var(--muted); line-height: 1.55; text-align: center; }
 
-    /* HEADER BUTTONS */
     .header-btn {
       width: 32px; height: 32px; border-radius: 8px;
-      border: 0.5px solid var(--border);
-      background: var(--glass);
-      color: var(--muted);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 15px;
-      transition: all 0.2s; flex-shrink: 0;
+      border: 0.5px solid var(--border); background: var(--glass);
+      color: var(--muted); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 15px; transition: all 0.2s; flex-shrink: 0;
     }
     .header-btn:active { border-color: var(--gold); color: var(--gold-bright); }
-    #tts-btn.on {
-      border-color: rgba(74,222,128,0.5);
-      background: rgba(74,222,128,0.08);
-      color: #4ade80;
-    }
   </style>
 </head>
 <body>
@@ -500,58 +353,34 @@
 <div class="scan"></div>
 
 <div id="app">
-  <!-- HEADER -->
   <div id="header">
     <div class="header-inner">
       <div class="logo">
         <div class="logo-name">LUMIÈRE</div>
-        <div class="logo-tagline">Hotel Intelligence</div>
+        <div class="logo-tagline">Hotel Receptie</div>
       </div>
-      <div class="header-right" style="flex-direction:row;align-items:center;gap:10px;">
+      <div class="header-right">
         <div class="status-pill">
           <div class="status-dot" id="status-dot"></div>
           <span id="status-text">Gereed</span>
         </div>
-        <button id="tts-btn" class="header-btn" onclick="toggleTts()" title="Tekst-naar-spraak aan/uit">🔇</button>
-        <button id="settings-btn" class="header-btn" onclick="openSettings()" title="API-instellingen">⚙️</button>
+        <button id="settings-btn" class="header-btn" onclick="openSettings()" title="Instellingen">⚙️</button>
       </div>
     </div>
   </div>
 
-  <!-- VESTIGING TABS -->
-  <div id="tabs">
-    <div class="tab-row" id="tab-row"></div>
-  </div>
-
-  <!-- MESSAGES -->
   <div id="messages">
     <div id="welcome">
       <div class="welcome-ring">🏨</div>
-      <div class="welcome-title">Goedemiddag</div>
-      <div class="welcome-sub">Uw persoonlijke hotel-assistent. Spreek of typ uw vraag.</div>
-      <div class="quick-list">
-        <button class="quick-btn" onclick="sendQuick('Wat zijn de bezettingsgraden van alle vestigingen vandaag?')">
-          <span>📊</span> Bezettingsgraad vandaag
-        </button>
-        <button class="quick-btn" onclick="sendQuick('Zijn er nieuwe reserveringen binnengekomen?')">
-          <span>📅</span> Nieuwe reserveringen
-        </button>
-        <button class="quick-btn" onclick="sendQuick('Wat staat er vanavond op de menukaart van het restaurant?')">
-          <span>🍽️</span> Menukaart vanavond
-        </button>
-        <button class="quick-btn" onclick="sendQuick('Geef een overzicht van alle openstaande klachten.')">
-          <span>⚠️</span> Openstaande klachten
-        </button>
-      </div>
+      <div class="welcome-title">Goedemiddag, welkom bij Hotel Lumière.</div>
+      <div class="welcome-sub">Waarmee mag ik u helpen?</div>
     </div>
   </div>
 
-  <!-- WAVE VISUALIZER -->
   <div id="wave-area">
     <canvas id="wave-canvas"></canvas>
   </div>
 
-  <!-- INPUT AREA -->
   <div id="input-area">
     <div id="input-toggle">
       <button class="toggle-btn active" id="toggle-voice" onclick="switchMode('voice')">🎙 Stem</button>
@@ -575,7 +404,7 @@
 
     <div class="input-row" id="type-row-wrapper" style="display:none">
       <div id="type-row">
-        <textarea id="text-input" placeholder="Typ uw vraag..." rows="1"></textarea>
+        <textarea id="text-input" placeholder="Typ uw bericht..." rows="1"></textarea>
         <button id="send-btn" onclick="sendTyped()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px">
             <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -591,143 +420,52 @@
 <!-- SETTINGS MODAL -->
 <div id="settings-overlay" class="hidden">
   <div id="settings-card">
-    <div class="settings-header">
+    <div>
       <div class="settings-title">Instellingen</div>
-      <div class="settings-sub">Uw gegevens worden lokaal opgeslagen op dit apparaat en nooit gedeeld.</div>
+      <div class="settings-sub" style="margin-top:6px;">Uw gegevens worden lokaal opgeslagen op dit apparaat.</div>
     </div>
     <div class="settings-field">
       <div class="settings-label">Anthropic API-sleutel</div>
       <div class="settings-input-wrap">
         <input id="api-key-input" type="password" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
-        <button id="toggle-key-vis" onclick="toggleKeyVisibility()" title="Toon/verberg sleutel">👁</button>
+        <button onclick="toggleKeyVisibility()">👁</button>
       </div>
     </div>
     <div class="settings-field">
-      <div class="settings-label">Proxy-URL <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(verplicht voor browser-gebruik)</span></div>
+      <div class="settings-label">Proxy-URL <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(verplicht)</span></div>
       <div class="settings-input-wrap">
-        <input id="proxy-url-input" type="url" placeholder="https://jouw-worker.workers.dev" autocomplete="off" spellcheck="false" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;padding:11px 14px;">
+        <input id="proxy-url-input" type="url" placeholder="https://jouw-worker.workers.dev" autocomplete="off" spellcheck="false">
       </div>
     </div>
-    <button id="save-key-btn" onclick="saveApiKey()" disabled>Opslaan &amp; Doorgaan</button>
-    <button id="tts-test-btn" onclick="testSpeak()" style="width:100%;padding:10px;border-radius:10px;border:0.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.08em;cursor:pointer;">Test spraak 🔊</button>
-    <div id="tts-test-feedback" style="font-size:12px;text-align:center;color:var(--muted);min-height:16px;"></div>
-    <div class="settings-hint">Anthropic: console.anthropic.com</div>
+    <button id="save-key-btn" onclick="saveSettings()" disabled>Opslaan &amp; Doorgaan</button>
+    <div class="settings-hint">console.anthropic.com</div>
   </div>
 </div>
 
 <script>
 // ── STATE ──────────────────────────────────────────────────────────────
-const VESTIGINGEN = ['Alle', 'Amsterdam', 'Rotterdam', 'Utrecht', 'Den Haag'];
-let activeVestiging = 'Alle';
 let history = [];
 let isProcessing = false;
 let isListening = false;
 let recognition = null;
-let audioCtx = null;
-let analyser = null;
 let animFrame = null;
 let inputMode = 'voice';
 let currentTranscript = '';
 
-const SYSTEM_PROMPT = `Je bent de AI-assistent van Hotel Lumière, een luxe hotelketen met vestigingen in Amsterdam, Rotterdam, Utrecht en Den Haag. Je helpt de hoteleigenaar met alle aspecten van het hotelbeheer.
-
-Je hebt kennis van:
-- Kamerbezetting en reserveringen per vestiging
-- Restaurant boekingen en menukaarten
-- Personeelsbezetting
-- Klachtenafhandeling
-- Inkomsten en financiële overzichten
-
-Je doet alsof je toegang hebt tot echte data. Verzin realistische, specifieke data als je ernaar gevraagd wordt. Gebruik altijd echte getallen, namen, kamernummers etc. om het realistisch te maken.
-
-Na elk antwoord voeg je een JSON blok toe met gedetecteerde entiteiten. Formaat (altijd aan het einde, niets erna):
-[BLOCKS]{"items":[{"type":"Kamer","value":"..."},{"type":"Gast","value":"..."},{"type":"Datum","value":"..."},{"type":"Bedrag","value":"..."},{"type":"Vestiging","value":"..."},{"type":"Status","value":"..."}]}[/BLOCKS]
-
-Voeg alleen relevante items toe (max 5). Laat het blok weg als er geen relevante entiteiten zijn.
-
-Spreek de eigenaar aan als "u". Wees professioneel maar direct. Antwoord altijd in het Nederlands.`;
-
-// ── TEXT-TO-SPEECH (Web Speech API) ───────────────────────────────────
-let ttsEnabled = localStorage.getItem('lumiere_tts') !== 'off';
-let ttsVoice = null;
-
-function loadTtsVoice() {
-  if (!('speechSynthesis' in window)) return;
-  const voices = speechSynthesis.getVoices();
-  ttsVoice = voices.find(v => v.lang.startsWith('nl')) || voices[0] || null;
-}
-
-function toggleTts() {
-  ttsEnabled = !ttsEnabled;
-  localStorage.setItem('lumiere_tts', ttsEnabled ? 'on' : 'off');
-  updateTtsBtn();
-  if (!ttsEnabled) speechSynthesis.cancel();
-}
-
-function updateTtsBtn() {
-  const btn = document.getElementById('tts-btn');
-  if (!btn) return;
-  btn.textContent = ttsEnabled ? '🔊' : '🔇';
-  btn.classList.toggle('on', ttsEnabled);
-}
-
-function speak(text) {
-  if (!ttsEnabled || !text.trim() || !('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'nl-NL';
-  utt.rate = 1.0;
-  if (ttsVoice) utt.voice = ttsVoice;
-  utt.onstart = () => setStatus('speaking', 'Spreekt...', '');
-  utt.onend = () => setStatus('idle', 'Gereed', '');
-  speechSynthesis.speak(utt);
-}
-
-function setTestFeedback(msg, color) {
-  const el = document.getElementById('tts-test-feedback');
-  if (el) { el.textContent = msg; el.style.color = color || 'var(--muted)'; }
-}
-
-function testSpeak() {
-  if (!('speechSynthesis' in window)) {
-    setTestFeedback('Spraak niet ondersteund in deze browser.', '#f87171');
-    return;
-  }
-  loadTtsVoice();
-  speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance('Dit is een spraaktest van Hotel Lumière.');
-  utt.lang = 'nl-NL';
-  utt.rate = 1.0;
-  if (ttsVoice) utt.voice = ttsVoice;
-  utt.onstart = () => setTestFeedback('Spreekt... ✓', '#4ade80');
-  utt.onerror = (e) => setTestFeedback(`Fout: ${e.error}`, '#f87171');
-  speechSynthesis.speak(utt);
-}
-
-if ('speechSynthesis' in window) {
-  speechSynthesis.onvoiceschanged = loadTtsVoice;
-  loadTtsVoice();
-}
-
-function unlockAudio() {} // no-op, not needed for Web Speech API
+const SYSTEM_PROMPT = `Je bent een vriendelijke, professionele receptionist van Hotel Lumière, een luxe hotelketen met vestigingen in Amsterdam, Rotterdam, Utrecht en Den Haag. Een gast spreekt met je. Stel gerichte vragen om de gast te helpen, zoals bij een echte hotelreceptie. Vraag naar gewenste vestiging, datum, aantal personen, kamertype, en speciale wensen. Bevestig reserveringen netjes. Antwoord altijd in het Nederlands. Houd antwoorden kort en natuurlijk, maximaal 3 zinnen.`;
 
 // ── SETTINGS ───────────────────────────────────────────────────────────
 const API_KEY_STORAGE   = 'lumiere_api_key';
 const PROXY_URL_STORAGE = 'lumiere_proxy_url';
+const DEFAULT_PROXY     = 'https://speakapphotel.basgeevers.workers.dev';
 
 function getApiKey()   { return localStorage.getItem(API_KEY_STORAGE)   || ''; }
 function getProxyUrl() { return localStorage.getItem(PROXY_URL_STORAGE) || ''; }
-
-const DEFAULT_PROXY = 'https://speakapphotel.basgeevers.workers.dev';
-
-function getApiBase() {
-  const proxy = getProxyUrl();
-  return (proxy || DEFAULT_PROXY).replace(/\/$/, '');
-}
+function getApiBase()  { return (getProxyUrl() || DEFAULT_PROXY).replace(/\/$/, ''); }
 
 function openSettings() {
-  document.getElementById('api-key-input').value          = getApiKey();
-  document.getElementById('proxy-url-input').value        = getProxyUrl();
+  document.getElementById('api-key-input').value   = getApiKey();
+  document.getElementById('proxy-url-input').value = getProxyUrl();
   updateSaveBtn();
   document.getElementById('settings-overlay').classList.remove('hidden');
   setTimeout(() => document.getElementById('api-key-input').focus(), 50);
@@ -737,9 +475,9 @@ function closeSettings() {
   document.getElementById('settings-overlay').classList.add('hidden');
 }
 
-function saveApiKey() {
-  const key    = document.getElementById('api-key-input').value.trim();
-  const proxy  = document.getElementById('proxy-url-input').value.trim();
+function saveSettings() {
+  const key   = document.getElementById('api-key-input').value.trim();
+  const proxy = document.getElementById('proxy-url-input').value.trim();
   if (!key.startsWith('sk-ant-')) return;
   localStorage.setItem(API_KEY_STORAGE, key);
   if (proxy) localStorage.setItem(PROXY_URL_STORAGE, proxy);
@@ -760,33 +498,16 @@ function updateSaveBtn() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('api-key-input').addEventListener('input', updateSaveBtn);
   document.getElementById('api-key-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') saveApiKey();
-    if (e.key === 'Escape') { if (getApiKey()) closeSettings(); }
+    if (e.key === 'Enter') saveSettings();
+    if (e.key === 'Escape' && getApiKey()) closeSettings();
   });
 });
 
 // ── INIT ──────────────────────────────────────────────────────────────
 function init() {
-  buildTabs();
   setupSpeechRecognition();
   setupTextInput();
-  updateTtsBtn();
   if (!getApiKey()) openSettings();
-}
-
-function buildTabs() {
-  const row = document.getElementById('tab-row');
-  VESTIGINGEN.forEach(v => {
-    const t = document.createElement('button');
-    t.className = 'tab' + (v === activeVestiging ? ' active' : '');
-    t.textContent = v;
-    t.onclick = () => {
-      activeVestiging = v;
-      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-      t.classList.add('active');
-    };
-    row.appendChild(t);
-  });
 }
 
 // ── SPEECH RECOGNITION ─────────────────────────────────────────────────
@@ -816,12 +537,10 @@ function setupSpeechRecognition() {
   };
 
   recognition.onresult = (e) => {
-    let interim = '';
-    let final = '';
+    let interim = '', final = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) final += t;
-      else interim += t;
+      if (e.results[i].isFinal) final += t; else interim += t;
     }
     currentTranscript = final || interim;
     document.getElementById('transcript-text').textContent = currentTranscript;
@@ -840,16 +559,12 @@ function setupSpeechRecognition() {
     if (e.error !== 'no-speech' && e.error !== 'aborted') {
       setStatus('error', 'Fout: ' + e.error, 'red');
       document.getElementById('ambient-border').className = 'error';
-      setTimeout(() => {
-        setStatus('idle', 'Gereed', '');
-        document.getElementById('ambient-border').className = '';
-      }, 2000);
+      setTimeout(() => { setStatus('idle', 'Gereed', ''); document.getElementById('ambient-border').className = ''; }, 2000);
     }
   };
 }
 
 function toggleMic() {
-  unlockAudio();
   if (isProcessing) return;
   if (!recognition) return;
   if (isListening) {
@@ -865,10 +580,7 @@ function stopListeningUI() {
   document.getElementById('mic-btn').classList.remove('listening');
   document.getElementById('wave-area').classList.remove('active');
   stopWave();
-  if (!isProcessing) {
-    setStatus('idle', 'Gereed', '');
-    document.getElementById('ambient-border').className = '';
-  }
+  if (!isProcessing) { setStatus('idle', 'Gereed', ''); document.getElementById('ambient-border').className = ''; }
   document.getElementById('transcript-box').classList.remove('active');
   document.getElementById('transcript-placeholder').style.display = 'inline';
   document.getElementById('transcript-text').style.display = 'none';
@@ -883,14 +595,11 @@ function startWave() {
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
   const W = canvas.offsetWidth, H = canvas.offsetHeight;
   let t = 0;
-
   function draw() {
     ctx.clearRect(0, 0, W, H);
     ctx.beginPath();
     for (let x = 0; x <= W; x++) {
-      const freq1 = Math.sin((x / W) * Math.PI * 6 + t) * (H * 0.22);
-      const freq2 = Math.sin((x / W) * Math.PI * 10 + t * 1.3) * (H * 0.1);
-      const y = H / 2 + freq1 + freq2;
+      const y = H / 2 + Math.sin((x / W) * Math.PI * 6 + t) * (H * 0.22) + Math.sin((x / W) * Math.PI * 10 + t * 1.3) * (H * 0.1);
       x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     const grad = ctx.createLinearGradient(0, 0, W, 0);
@@ -899,9 +608,7 @@ function startWave() {
     grad.addColorStop(0.5, 'rgba(240,204,110,0.9)');
     grad.addColorStop(0.8, 'rgba(201,168,76,0.6)');
     grad.addColorStop(1, 'rgba(201,168,76,0)');
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    ctx.strokeStyle = grad; ctx.lineWidth = 1.5; ctx.stroke();
     t += 0.06;
     animFrame = requestAnimationFrame(draw);
   }
@@ -923,20 +630,15 @@ function setupTextInput() {
     ta.style.height = Math.min(ta.scrollHeight, 100) + 'px';
   });
   ta.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendTyped();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTyped(); }
   });
 }
 
 function sendTyped() {
-  unlockAudio();
   const ta = document.getElementById('text-input');
   const text = ta.value.trim();
   if (!text || isProcessing) return;
-  ta.value = '';
-  ta.style.height = 'auto';
+  ta.value = ''; ta.style.height = 'auto';
   sendMessage(text);
 }
 
@@ -949,12 +651,6 @@ function switchMode(mode) {
 }
 
 // ── SEND MESSAGE ───────────────────────────────────────────────────────
-function sendQuick(text) {
-  unlockAudio();
-  document.getElementById('welcome')?.remove();
-  sendMessage(text);
-}
-
 async function sendMessage(text) {
   if (isProcessing) return;
   document.getElementById('welcome')?.remove();
@@ -963,14 +659,8 @@ async function sendMessage(text) {
   setStatus('thinking', 'Denkt na...', 'purple');
   document.getElementById('ambient-border').className = 'thinking';
 
-  // Add vestiging context
-  const contextText = activeVestiging !== 'Alle'
-    ? `[Vestiging: ${activeVestiging}] ${text}`
-    : text;
-
-  history.push({ role: 'user', content: contextText });
+  history.push({ role: 'user', content: text });
   addMsg('user', text);
-
   const typingEl = addTyping();
 
   const apiKey = getApiKey();
@@ -987,7 +677,7 @@ async function sendMessage(text) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
+        max_tokens: 300,
         system: SYSTEM_PROMPT,
         messages: history
       })
@@ -1002,17 +692,12 @@ async function sendMessage(text) {
       setStatus('error', 'Fout', 'red');
       document.getElementById('ambient-border').className = 'error';
       setTimeout(() => { setStatus('idle', 'Gereed', ''); document.getElementById('ambient-border').className = ''; }, 3000);
-      history.pop();
-      isProcessing = false;
-      return;
+      history.pop(); isProcessing = false; return;
     }
 
-    const raw = data.content?.[0]?.text || 'Geen antwoord ontvangen.';
-    const { clean, blocks } = parseResponse(raw);
-
-    history.push({ role: 'assistant', content: raw });
-    addMsg('ai', clean, blocks);
-    speak(clean);
+    const reply = data.content?.[0]?.text || 'Geen antwoord ontvangen.';
+    history.push({ role: 'assistant', content: reply });
+    addMsg('ai', reply);
 
     setStatus('idle', 'Gereed', '');
     document.getElementById('ambient-border').className = 'speaking';
@@ -1020,88 +705,29 @@ async function sendMessage(text) {
 
   } catch (err) {
     typingEl.remove();
-    const msg = getProxyUrl()
-      ? 'Verbindingsfout. Controleer de proxy-URL in ⚙️ instellingen.'
-      : 'Verbindingsfout. Stel een proxy-URL in via ⚙️ (zie worker.js in de repo).';
-    addMsg('ai', msg);
+    addMsg('ai', 'Verbindingsfout. Controleer uw instellingen via ⚙️.');
     setStatus('error', 'Fout', 'red');
     document.getElementById('ambient-border').className = 'error';
-    setTimeout(() => {
-      setStatus('idle', 'Gereed', '');
-      document.getElementById('ambient-border').className = '';
-    }, 3000);
+    setTimeout(() => { setStatus('idle', 'Gereed', ''); document.getElementById('ambient-border').className = ''; }, 3000);
     history.pop();
   }
 
   isProcessing = false;
 }
 
-// ── PARSE AI RESPONSE ──────────────────────────────────────────────────
-function parseResponse(raw) {
-  const blockMatch = raw.match(/\[BLOCKS\]([\s\S]*?)\[\/BLOCKS\]/);
-  let blocks = [];
-  let clean = raw.replace(/\[BLOCKS\][\s\S]*?\[\/BLOCKS\]/g, '').trim();
-
-  if (blockMatch) {
-    try {
-      const parsed = JSON.parse(blockMatch[1]);
-      blocks = (parsed.items || []).filter(b => b.value && b.value !== '...' && b.value.length > 0);
-    } catch(e) {}
-  }
-  return { clean, blocks };
-}
-
-// ── BLOCK COLORS ───────────────────────────────────────────────────────
-const BLOCK_COLORS = {
-  'Kamer':    '#c9a84c',
-  'Gast':     '#7dd3fc',
-  'Datum':    '#86efac',
-  'Bedrag':   '#fda4af',
-  'Vestiging':'#c4b5fd',
-  'Status':   '#fdba74',
-};
-
 // ── ADD MESSAGE ────────────────────────────────────────────────────────
-function addMsg(role, text, blocks = []) {
+function addMsg(role, text) {
   const msgs = document.getElementById('messages');
   const wrap = document.createElement('div');
   wrap.className = `msg ${role}`;
-
   const label = document.createElement('div');
   label.className = 'msg-label';
-  label.textContent = role === 'user' ? 'U' : 'Lumière AI';
-
+  label.textContent = role === 'user' ? 'U' : 'Receptionist';
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   bubble.textContent = text;
-
   wrap.appendChild(label);
   wrap.appendChild(bubble);
-
-  if (role === 'ai' && blocks.length > 0) {
-    const blockRow = document.createElement('div');
-    blockRow.className = 'action-blocks';
-    blocks.forEach(b => {
-      const el = document.createElement('div');
-      el.className = 'action-block';
-      const color = BLOCK_COLORS[b.type] || 'var(--gold)';
-      el.style.setProperty('--block-color', color);
-
-      const typeEl = document.createElement('div');
-      typeEl.className = 'block-type';
-      typeEl.textContent = b.type;
-
-      const valEl = document.createElement('div');
-      valEl.className = 'block-value';
-      valEl.textContent = b.value;
-
-      el.appendChild(typeEl);
-      el.appendChild(valEl);
-      blockRow.appendChild(el);
-    });
-    wrap.appendChild(blockRow);
-  }
-
   msgs.appendChild(wrap);
   msgs.scrollTop = msgs.scrollHeight;
   return wrap;
@@ -1113,7 +739,7 @@ function addTyping() {
   wrap.className = 'msg ai';
   const label = document.createElement('div');
   label.className = 'msg-label';
-  label.textContent = 'Lumière AI';
+  label.textContent = 'Receptionist';
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
