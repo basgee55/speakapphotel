@@ -397,6 +397,96 @@
       text-align: center; font-size: 12px; color: var(--muted);
       padding: 6px; line-height: 1.5;
     }
+
+    /* SETTINGS MODAL */
+    #settings-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(5,5,10,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    #settings-overlay.hidden { display: none; }
+    #settings-card {
+      width: 100%; max-width: 380px;
+      background: var(--surface2);
+      border: 0.5px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 24px;
+      display: flex; flex-direction: column; gap: 18px;
+      box-shadow: 0 0 60px rgba(201,168,76,0.08);
+    }
+    .settings-header {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .settings-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px; font-weight: 300;
+      color: var(--gold-bright); letter-spacing: 0.06em;
+    }
+    .settings-sub {
+      font-size: 12px; color: var(--muted); line-height: 1.6;
+    }
+    .settings-field { display: flex; flex-direction: column; gap: 7px; }
+    .settings-label {
+      font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+      font-weight: 600; color: var(--gold);
+    }
+    .settings-input-wrap {
+      display: flex; align-items: center;
+      background: rgba(255,255,255,0.03);
+      border: 0.5px solid rgba(201,168,76,0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .settings-input-wrap:focus-within { border-color: var(--gold); }
+    #api-key-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-family: 'Rajdhani', sans-serif;
+      font-size: 14px; font-weight: 400;
+      padding: 11px 14px;
+      letter-spacing: 0.04em;
+    }
+    #api-key-input::placeholder { color: var(--muted); }
+    #toggle-key-vis {
+      padding: 0 12px; background: transparent; border: none;
+      color: var(--muted); cursor: pointer; font-size: 15px;
+      flex-shrink: 0;
+    }
+    #save-key-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, rgba(201,168,76,0.25), rgba(201,168,76,0.12));
+      border: 0.5px solid var(--gold);
+      color: var(--gold-bright);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #save-key-btn:active { background: rgba(201,168,76,0.35); }
+    #save-key-btn:disabled { opacity: 0.4; cursor: default; }
+    .settings-hint {
+      font-size: 11px; color: var(--muted); line-height: 1.55; text-align: center;
+    }
+    .settings-hint a { color: var(--gold-dim); }
+
+    /* SETTINGS GEAR BUTTON */
+    #settings-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 0.5px solid var(--border);
+      background: var(--glass);
+      color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 15px;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    #settings-btn:active { border-color: var(--gold); color: var(--gold-bright); }
   </style>
 </head>
 <body>
@@ -412,11 +502,12 @@
         <div class="logo-name">LUMIÈRE</div>
         <div class="logo-tagline">Hotel Intelligence</div>
       </div>
-      <div class="header-right">
+      <div class="header-right" style="flex-direction:row;align-items:center;gap:10px;">
         <div class="status-pill">
           <div class="status-dot" id="status-dot"></div>
           <span id="status-text">Gereed</span>
         </div>
+        <button id="settings-btn" onclick="openSettings()" title="API-instellingen">⚙️</button>
       </div>
     </div>
   </div>
@@ -491,6 +582,25 @@
   </div>
 </div>
 
+<!-- SETTINGS MODAL -->
+<div id="settings-overlay" class="hidden">
+  <div id="settings-card">
+    <div class="settings-header">
+      <div class="settings-title">API-sleutel instellen</div>
+      <div class="settings-sub">Voer uw Anthropic API-sleutel in. Deze wordt lokaal opgeslagen op uw apparaat en nooit gedeeld.</div>
+    </div>
+    <div class="settings-field">
+      <div class="settings-label">Anthropic API-sleutel</div>
+      <div class="settings-input-wrap">
+        <input id="api-key-input" type="password" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+        <button id="toggle-key-vis" onclick="toggleKeyVisibility()" title="Toon/verberg sleutel">👁</button>
+      </div>
+    </div>
+    <button id="save-key-btn" onclick="saveApiKey()" disabled>Opslaan &amp; Doorgaan</button>
+    <div class="settings-hint">Uw sleutel is te vinden op console.anthropic.com</div>
+  </div>
+</div>
+
 <script>
 // ── STATE ──────────────────────────────────────────────────────────────
 const VESTIGINGEN = ['Alle', 'Amsterdam', 'Rotterdam', 'Utrecht', 'Den Haag'];
@@ -523,11 +633,57 @@ Voeg alleen relevante items toe (max 5). Laat het blok weg als er geen relevante
 
 Spreek de eigenaar aan als "u". Wees professioneel maar direct. Antwoord altijd in het Nederlands.`;
 
+// ── API KEY ────────────────────────────────────────────────────────────
+const API_KEY_STORAGE = 'lumiere_api_key';
+
+function getApiKey() {
+  return localStorage.getItem(API_KEY_STORAGE) || '';
+}
+
+function openSettings() {
+  const overlay = document.getElementById('settings-overlay');
+  const input = document.getElementById('api-key-input');
+  input.value = getApiKey();
+  updateSaveBtn();
+  overlay.classList.remove('hidden');
+  setTimeout(() => input.focus(), 50);
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.add('hidden');
+}
+
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val.startsWith('sk-ant-')) return;
+  localStorage.setItem(API_KEY_STORAGE, val);
+  closeSettings();
+}
+
+function toggleKeyVisibility() {
+  const input = document.getElementById('api-key-input');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function updateSaveBtn() {
+  const val = document.getElementById('api-key-input').value.trim();
+  document.getElementById('save-key-btn').disabled = !val.startsWith('sk-ant-');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('api-key-input').addEventListener('input', updateSaveBtn);
+  document.getElementById('api-key-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveApiKey();
+    if (e.key === 'Escape') { if (getApiKey()) closeSettings(); }
+  });
+});
+
 // ── INIT ──────────────────────────────────────────────────────────────
 function init() {
   buildTabs();
   setupSpeechRecognition();
   setupTextInput();
+  if (!getApiKey()) openSettings();
 }
 
 function buildTabs() {
@@ -726,12 +882,15 @@ async function sendMessage(text) {
 
   const typingEl = addTyping();
 
+  const apiKey = getApiKey();
+  if (!apiKey) { openSettings(); isProcessing = false; typingEl.remove(); history.pop(); return; }
+
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': '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',
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-calls': 'true',
       },
