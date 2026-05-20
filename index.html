@@ -476,8 +476,8 @@
     }
     .settings-hint a { color: var(--gold-dim); }
 
-    /* SETTINGS GEAR BUTTON */
-    #settings-btn {
+    /* HEADER BUTTONS */
+    .header-btn {
       width: 32px; height: 32px; border-radius: 8px;
       border: 0.5px solid var(--border);
       background: var(--glass);
@@ -486,7 +486,12 @@
       cursor: pointer; font-size: 15px;
       transition: all 0.2s; flex-shrink: 0;
     }
-    #settings-btn:active { border-color: var(--gold); color: var(--gold-bright); }
+    .header-btn:active { border-color: var(--gold); color: var(--gold-bright); }
+    #tts-btn.on {
+      border-color: rgba(74,222,128,0.5);
+      background: rgba(74,222,128,0.08);
+      color: #4ade80;
+    }
   </style>
 </head>
 <body>
@@ -507,7 +512,8 @@
           <div class="status-dot" id="status-dot"></div>
           <span id="status-text">Gereed</span>
         </div>
-        <button id="settings-btn" onclick="openSettings()" title="API-instellingen">⚙️</button>
+        <button id="tts-btn" class="header-btn" onclick="toggleTts()" title="Tekst-naar-spraak aan/uit">🔇</button>
+        <button id="settings-btn" class="header-btn" onclick="openSettings()" title="API-instellingen">⚙️</button>
       </div>
     </div>
   </div>
@@ -639,6 +645,32 @@ Voeg alleen relevante items toe (max 5). Laat het blok weg als er geen relevante
 
 Spreek de eigenaar aan als "u". Wees professioneel maar direct. Antwoord altijd in het Nederlands.`;
 
+// ── TEXT-TO-SPEECH ─────────────────────────────────────────────────────
+let ttsEnabled = localStorage.getItem('lumiere_tts') !== 'off';
+
+function toggleTts() {
+  ttsEnabled = !ttsEnabled;
+  localStorage.setItem('lumiere_tts', ttsEnabled ? 'on' : 'off');
+  updateTtsBtn();
+  if (!ttsEnabled) speechSynthesis.cancel();
+}
+
+function updateTtsBtn() {
+  const btn = document.getElementById('tts-btn');
+  if (!btn) return;
+  btn.textContent = ttsEnabled ? '🔊' : '🔇';
+  btn.classList.toggle('on', ttsEnabled);
+}
+
+function speak(text) {
+  if (!ttsEnabled || !('speechSynthesis' in window) || !text.trim()) return;
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'nl-NL';
+  utt.rate = 1.0;
+  speechSynthesis.speak(utt);
+}
+
 // ── SETTINGS ───────────────────────────────────────────────────────────
 const API_KEY_STORAGE   = 'lumiere_api_key';
 const PROXY_URL_STORAGE = 'lumiere_proxy_url';
@@ -698,6 +730,7 @@ function init() {
   buildTabs();
   setupSpeechRecognition();
   setupTextInput();
+  updateTtsBtn();
   if (!getApiKey()) openSettings();
 }
 
@@ -936,6 +969,7 @@ async function sendMessage(text) {
 
     history.push({ role: 'assistant', content: raw });
     addMsg('ai', clean, blocks);
+    speak(clean);
 
     setStatus('idle', 'Gereed', '');
     document.getElementById('ambient-border').className = 'speaking';
