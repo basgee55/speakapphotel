@@ -646,9 +646,11 @@ const PROXY_URL_STORAGE = 'lumiere_proxy_url';
 function getApiKey()   { return localStorage.getItem(API_KEY_STORAGE)   || ''; }
 function getProxyUrl() { return localStorage.getItem(PROXY_URL_STORAGE) || ''; }
 
+const DEFAULT_PROXY = 'https://speakapphotel.basgeevers.workers.dev';
+
 function getApiBase() {
   const proxy = getProxyUrl();
-  return proxy ? proxy.replace(/\/$/, '') : 'https://api.anthropic.com';
+  return (proxy || DEFAULT_PROXY).replace(/\/$/, '');
 }
 
 function openSettings() {
