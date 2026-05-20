@@ -284,21 +284,6 @@
     <button class="quick-btn purple" onclick="sendQuick('Ik heb een verzoek voor de receptie.')">Verzoek</button>
   </div>
 
-  <!-- TEMP: stem-debug knop -->
-  <button id="voice-debug-btn" onclick="showVoices()" style="
-    margin-bottom:8px; padding:8px 16px; border-radius:10px; cursor:pointer;
-    background:rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.35);
-    color:#67e8f9; font-family:inherit; font-size:12px; letter-spacing:1px;
-    flex-shrink:0;
-  ">🔊 TOON STEMMEN</button>
-  <div id="voice-list" style="
-    display:none; width:100%; max-width:460px; flex-shrink:0;
-    background:rgba(6,182,212,0.05); border:1px solid rgba(6,182,212,0.2);
-    border-radius:12px; padding:12px 14px; margin-bottom:8px;
-    font-size:12px; line-height:1.8; color:#94a3b8; max-height:200px; overflow-y:auto;
-  "></div>
-  <!-- /TEMP -->
-
   <button id="keyboard-toggle" onclick="toggleTypeArea()">⌨ TYPEN</button>
 
   <div id="type-area">
@@ -405,13 +390,12 @@ if (window.speechSynthesis) {
 }
 
 function pickBestVoice(voices) {
-  const nl = voices.filter(v => v.lang.startsWith('nl'));
-  // Voorkeursvolgorde: nl-NL lokaal > nl-BE lokaal > nl-NL online > nl-BE online > elke nl
-  return nl.find(v => v.lang === 'nl-NL' && v.localService)
-      || nl.find(v => v.lang === 'nl-BE' && v.localService)
-      || nl.find(v => v.lang === 'nl-NL')
-      || nl.find(v => v.lang === 'nl-BE')
-      || nl[0]
+  return voices.find(v => v.name === 'Google Nederlands')
+      || voices.find(v => v.name === 'Microsoft Frank - Dutch (Netherlands)')
+      || voices.find(v => v.lang === 'nl-NL' && v.localService)
+      || voices.find(v => v.lang === 'nl-BE' && v.localService)
+      || voices.find(v => v.lang === 'nl-NL')
+      || voices.find(v => v.lang.startsWith('nl'))
       || null;
 }
 
@@ -638,37 +622,6 @@ function setStatus(state, text) {
 }
 
 // ── TEXT INPUT ─────────────────────────────────────────────────────────
-function showVoices() {
-  const voices = speechSynthesis.getVoices();
-  const nl = voices.filter(v => v.lang.startsWith('nl'));
-  const other = voices.filter(v => !v.lang.startsWith('nl'));
-
-  console.log(`[Stemmen] Totaal: ${voices.length} | Nederlands: ${nl.length}`);
-  nl.forEach((v, i) => console.log(`  NL ${i+1}: "${v.name}" | ${v.lang} | lokaal: ${v.localService}`));
-  other.forEach(v => console.log(`  OVERIG: "${v.name}" | ${v.lang}`));
-
-  const box = document.getElementById('voice-list');
-  if (box.style.display !== 'none') { box.style.display = 'none'; return; }
-
-  let html = `<strong style="color:#22d3ee">Nederlandse stemmen (${nl.length})</strong><br>`;
-  if (nl.length === 0) {
-    html += '<span style="color:#f87171">Geen gevonden</span><br>';
-  } else {
-    nl.forEach((v, i) => {
-      const tag = v.localService ? '✓ lokaal' : '☁ online';
-      const def = v.default ? ' ★' : '';
-      html += `${i+1}. <span style="color:#c4b5fd">${v.name}</span> — ${v.lang} <span style="opacity:0.6">[${tag}${def}]</span><br>`;
-    });
-  }
-  html += `<br><strong style="color:#a78bfa">Alle stemmen (${voices.length})</strong><br>`;
-  voices.forEach(v => {
-    html += `<span style="opacity:0.5">${v.name} (${v.lang})</span><br>`;
-  });
-
-  box.innerHTML = html;
-  box.style.display = 'block';
-}
-
 function toggleTypeArea() {
   const area = document.getElementById('type-area');
   const show = !area.classList.contains('visible');
