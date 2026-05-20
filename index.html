@@ -698,10 +698,7 @@ async function sendMessage(text) {
     const reply = data.content?.[0]?.text || 'Geen antwoord ontvangen.';
     history.push({ role: 'assistant', content: reply });
     addMsg('ai', reply);
-
-    setStatus('idle', 'Gereed', '');
-    document.getElementById('ambient-border').className = 'speaking';
-    setTimeout(() => { document.getElementById('ambient-border').className = ''; }, 1500);
+    speak(reply);
 
   } catch (err) {
     typingEl.remove();
@@ -748,6 +745,30 @@ function addTyping() {
   msgs.appendChild(wrap);
   msgs.scrollTop = msgs.scrollHeight;
   return wrap;
+}
+
+// ── TTS ────────────────────────────────────────────────────────────────
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'nl-NL';
+  utt.rate = 0.9;
+  utt.pitch = 1.05;
+  const voices = speechSynthesis.getVoices();
+  const best = voices.find(v => v.lang === 'nl-NL' && v.localService)
+            || voices.find(v => v.lang === 'nl-NL')
+            || voices.find(v => v.lang.startsWith('nl'));
+  if (best) utt.voice = best;
+  utt.onstart = () => {
+    setStatus('speaking', 'Spreekt...', '');
+    document.getElementById('ambient-border').className = 'speaking';
+  };
+  utt.onend = utt.onerror = () => {
+    setStatus('idle', 'Gereed', '');
+    document.getElementById('ambient-border').className = '';
+  };
+  speechSynthesis.speak(utt);
 }
 
 // ── STATUS ─────────────────────────────────────────────────────────────
