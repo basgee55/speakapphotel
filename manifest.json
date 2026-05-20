@@ -4,8 +4,8 @@
   "description": "Persoonlijke hotel-assistent voor Hotel Lumière",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#05050a",
-  "theme_color": "#05050a",
+  "background_color": "#0b0f1e",
+  "theme_color": "#0b0f1e",
   "orientation": "portrait",
   "lang": "nl",
   "icons": [
