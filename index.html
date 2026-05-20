@@ -615,6 +615,12 @@
         <button onclick="toggleElLabsVis()" title="Toon/verberg sleutel" style="padding:0 12px;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:15px;">👁</button>
       </div>
     </div>
+    <div class="settings-field">
+      <div class="settings-label">Stem-ID <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(optioneel, standaard: Rachel)</span></div>
+      <div class="settings-input-wrap">
+        <input id="elevenlabs-voice-input" type="text" placeholder="21m00Tcm4TlvDq8ikWAM" autocomplete="off" spellcheck="false" style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;padding:11px 14px;letter-spacing:0.02em;">
+      </div>
+    </div>
     <button id="save-key-btn" onclick="saveApiKey()" disabled>Opslaan &amp; Doorgaan</button>
     <button id="tts-test-btn" onclick="testSpeak()" style="width:100%;padding:10px;border-radius:10px;border:0.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;letter-spacing:0.08em;cursor:pointer;">Test spraak 🔊</button>
     <div id="tts-test-feedback" style="font-size:12px;text-align:center;color:var(--muted);min-height:16px;"></div>
@@ -655,8 +661,12 @@ Voeg alleen relevante items toe (max 5). Laat het blok weg als er geen relevante
 Spreek de eigenaar aan als "u". Wees professioneel maar direct. Antwoord altijd in het Nederlands.`;
 
 // ── TEXT-TO-SPEECH (ElevenLabs) ────────────────────────────────────────
-const ELEVENLABS_KEY_STORAGE = 'elevenlabs_key';
-const ELEVENLABS_ENDPOINT = 'https://api.elevenlabs.io/v1/text-to-speech/rbqBOMK4BPTMGvIB7N8w';
+const ELEVENLABS_KEY_STORAGE    = 'elevenlabs_key';
+const ELEVENLABS_VOICE_STORAGE  = 'elevenlabs_voice';
+const ELEVENLABS_DEFAULT_VOICE  = '21m00Tcm4TlvDq8ikWAM'; // Rachel — gratis
+
+function getElLabsVoice() { return localStorage.getItem(ELEVENLABS_VOICE_STORAGE) || ELEVENLABS_DEFAULT_VOICE; }
+function getElLabsEndpoint() { return `https://api.elevenlabs.io/v1/text-to-speech/${getElLabsVoice()}`; }
 let ttsEnabled = localStorage.getItem('lumiere_tts') !== 'off';
 let ttsAudioCtx = null;
 let ttsCurrentSource = null;
@@ -704,7 +714,7 @@ async function speak(text) {
   if (!ttsAudioCtx) ttsAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (ttsAudioCtx.state === 'suspended') await ttsAudioCtx.resume();
   try {
-    const res = await fetch(ELEVENLABS_ENDPOINT, {
+    const res = await fetch(getElLabsEndpoint(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
       body: JSON.stringify({
@@ -756,7 +766,7 @@ async function testSpeak() {
   if (!ttsAudioCtx) ttsAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (ttsAudioCtx.state === 'suspended') await ttsAudioCtx.resume();
   try {
-    const res = await fetch(ELEVENLABS_ENDPOINT, {
+    const res = await fetch(getElLabsEndpoint(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
       body: JSON.stringify({
@@ -802,9 +812,10 @@ function getApiBase() {
 }
 
 function openSettings() {
-  document.getElementById('api-key-input').value        = getApiKey();
-  document.getElementById('proxy-url-input').value      = getProxyUrl();
-  document.getElementById('elevenlabs-key-input').value = getElLabsKey();
+  document.getElementById('api-key-input').value          = getApiKey();
+  document.getElementById('proxy-url-input').value        = getProxyUrl();
+  document.getElementById('elevenlabs-key-input').value   = getElLabsKey();
+  document.getElementById('elevenlabs-voice-input').value = localStorage.getItem(ELEVENLABS_VOICE_STORAGE) || '';
   updateSaveBtn();
   document.getElementById('settings-overlay').classList.remove('hidden');
   setTimeout(() => document.getElementById('api-key-input').focus(), 50);
@@ -824,6 +835,9 @@ function saveApiKey() {
   else localStorage.removeItem(PROXY_URL_STORAGE);
   if (elKey) localStorage.setItem(ELEVENLABS_KEY_STORAGE, elKey);
   else localStorage.removeItem(ELEVENLABS_KEY_STORAGE);
+  const voice = document.getElementById('elevenlabs-voice-input').value.trim();
+  if (voice) localStorage.setItem(ELEVENLABS_VOICE_STORAGE, voice);
+  else localStorage.removeItem(ELEVENLABS_VOICE_STORAGE);
   closeSettings();
 }
 
